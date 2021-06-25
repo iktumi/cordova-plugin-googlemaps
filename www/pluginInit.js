@@ -122,26 +122,24 @@ function pluginInit() {
   //--------------------------------------------
   // Hook the backbutton of Android action
   //--------------------------------------------
-  var anotherBackbuttonHandler = null;
-
+  var anotherBackbuttonHandler = []; 
+  
   function onBackButton(e) {
-
     // Check DOM tree for new page
     cordova.fireDocumentEvent('plugin_touch', {
       force: true
     });
-
-    if (anotherBackbuttonHandler) {
+    if (anotherBackbuttonHandler && anotherBackbuttonHandler.length > 0) {
       // anotherBackbuttonHandler must handle the page moving transaction.
       // The plugin does not take care anymore if another callback is registered.
-      anotherBackbuttonHandler(e);
+	  for (var i = 0; i < anotherBackbuttonHandler.length; i++) {
+        anotherBackbuttonHandler[i](e);
+	  }
     } else {
       cordova_exec(null, null, 'CordovaGoogleMaps', 'backHistory', []);
     }
   }
-
   document.addEventListener('backbutton', onBackButton);
-
   var _org_addEventListener = document.addEventListener;
   var _org_removeEventListener = document.removeEventListener;
   document.addEventListener = function (eventName, callback) {
@@ -150,9 +148,7 @@ function pluginInit() {
       _org_addEventListener.apply(this, args);
       return;
     }
-    if (!anotherBackbuttonHandler) {
-      anotherBackbuttonHandler = callback;
-    }
+	anotherBackbuttonHandler.push(callback);
   };
   document.removeEventListener = function (eventName, callback) {
     var args = Array.prototype.slice.call(arguments, 0);
@@ -160,11 +156,12 @@ function pluginInit() {
       _org_removeEventListener.apply(this, args);
       return;
     }
-    if (anotherBackbuttonHandler === callback) {
-      anotherBackbuttonHandler = null;
-    }
+    var anotherBackbuttonHandlerTemp = anotherBackbuttonHandler.filter((cb) => callback !== cb);
+    if (anotherBackbuttonHandlerTemp.length !==  anotherBackbuttonHandler.length) {
+      anotherBackbuttonHandler = anotherBackbuttonHandlerTemp;
+      return;
+    } 
   };
-
 }
 
 module.exports = pluginInit;
